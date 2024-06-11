@@ -219,6 +219,7 @@ def create(
     name: str,
     sender: Keypair,
 ):
+    click.echo(f"Sender: {sender.pubkey()}")
     stream_signer = Keypair()
     stream_metadata = stream_signer.pubkey()
     program = ctx.obj["program"]
