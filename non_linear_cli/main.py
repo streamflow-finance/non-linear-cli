@@ -1,8 +1,8 @@
 import hashlib
-import click
 import os
 from decimal import Decimal, InvalidOperation
 
+import click
 from borsh_construct import U64, CStruct
 from click import Context
 from solana.rpc.api import Client
@@ -14,14 +14,18 @@ from solders.pubkey import Pubkey
 from solders.rpc.responses import RpcConfirmedTransactionStatusWithSignature
 from solders.signature import Signature
 from spl.token.client import Token
-from spl.token.constants import TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID
+from spl.token.constants import ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID
 
 from .client.instructions import (
-    create as create_instruction,
-    cancel as cancel_instruction,
+    CancelAccounts,
     CreateAccounts,
     CreateArgs,
-    CancelAccounts,
+)
+from .client.instructions import (
+    cancel as cancel_instruction,
+)
+from .client.instructions import (
+    create as create_instruction,
 )
 from .client.types import CreateParams
 
@@ -37,6 +41,7 @@ RATE_PRECISION = 10**9
 
 
 def build_create_params(
+    start_time: int,
     net_amount_deposited: int,
     period: int,
     amount_per_period: int,
@@ -49,7 +54,7 @@ def build_create_params(
     name_byte_array = bytearray(64)
     name_byte_array[0 : len(encoded_name)] = encoded_name
     return CreateParams(
-        start_time=0,
+        start_time=start_time,
         net_amount_deposited=net_amount_deposited,
         period=period,
         amount_per_period=amount_per_period,
@@ -75,7 +80,7 @@ def validate_decimal(ctx, param, value: str) -> Decimal:
     try:
         return Decimal(value)
     except InvalidOperation:
-        raise click.BadParameter(f"Not a decimal value")
+        raise click.BadParameter("Not a decimal value")
 
 
 def validate_pubkey(ctx, param, value: str | None) -> Pubkey:
@@ -96,12 +101,12 @@ def validate_private_keys_file(ctx, param, value: str) -> Keypair:
         try:
             return Keypair.from_base58_string(value)
         except:
-            raise click.BadParameter(f"Invalid key or keys file does not exist")
+            raise click.BadParameter("Invalid key or keys file does not exist")
     with open(value) as r:
         try:
             return Keypair.from_json(r.read().strip())
         except:
-            raise click.BadParameter(f"Invalid keys file")
+            raise click.BadParameter("Invalid keys file")
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -157,6 +162,13 @@ def cli(
     callback=validate_pubkey,
     help="Mint of the token to vest",
 )
+@click.option(
+    "-t",
+    "--start-time",
+    show_default=True,
+    default=0,
+    help="Start Time of the vesting, passing 0 starts vesting immediately",
+)
 @click.option("-n", "--net-amount", show_default=True, default=1000000, help="Total amount of tokens to vest")
 @click.option("-p", "--period", show_default=True, default=30, help="Release period, release A amount every P seconds")
 @click.option(
@@ -196,6 +208,7 @@ def cli(
 def create(
     ctx: Context,
     recipient: Pubkey,
+    start_time: int,
     net_amount: int,
     mint: Pubkey,
     period: int,
@@ -222,7 +235,9 @@ def create(
         [bytes(recipient), bytes(TOKEN_PROGRAM_ID), bytes(mint)], ASSOCIATED_TOKEN_PROGRAM_ID
     )
     args = CreateArgs(
-        ix=build_create_params(net_amount, period, amount_per_period, name, increase_rate, penalty_rate, penalized)
+        ix=build_create_params(
+            start_time, net_amount, period, amount_per_period, name, increase_rate, penalty_rate, penalized
+        )
     )
     accounts = CreateAccounts(
         sender=sender.pubkey(),
@@ -321,7 +336,7 @@ def withdraw(
         [bytes(STREAMFLOW_TREASURY), bytes(TOKEN_PROGRAM_ID), bytes(mint)], ASSOCIATED_TOKEN_PROGRAM_ID
     )
     args = withdraw_stream_struct.build({"amount": amount})
-    ix_id = hashlib.sha256("global:withdraw".encode()).digest()[:8]
+    ix_id = hashlib.sha256(b"global:withdraw").digest()[:8]
     ix = Instruction(
         program_id=streamflow_program,
         data=bytes(ix_id) + bytes(args) + bytes(10),
