@@ -49,7 +49,9 @@ class IdlInstructionStub(ProgramError):
 
 class IdlInstructionInvalidProgram(ProgramError):
     def __init__(self):
-        super().__init__(1001, "The transaction was given an invalid program for the IDL instruction")
+        super().__init__(
+            1001, "The transaction was given an invalid program for the IDL instruction"
+        )
 
     code = 1001
     name = "IdlInstructionInvalidProgram"
@@ -301,7 +303,9 @@ class RequireGteViolated(ProgramError):
 
 class AccountDiscriminatorAlreadySet(ProgramError):
     def __init__(self):
-        super().__init__(3000, "The account discriminator was already set on this account")
+        super().__init__(
+            3000, "The account discriminator was already set on this account"
+        )
 
     code = 3000
     name = "AccountDiscriminatorAlreadySet"
@@ -364,7 +368,9 @@ class AccountNotMutable(ProgramError):
 
 class AccountOwnedByWrongProgram(ProgramError):
     def __init__(self):
-        super().__init__(3007, "The given account is owned by a different program than expected")
+        super().__init__(
+            3007, "The given account is owned by a different program than expected"
+        )
 
     code = 3007
     name = "AccountOwnedByWrongProgram"
@@ -409,7 +415,9 @@ class AccountNotSystemOwned(ProgramError):
 
 class AccountNotInitialized(ProgramError):
     def __init__(self):
-        super().__init__(3012, "The program expected this account to be already initialized")
+        super().__init__(
+            3012, "The program expected this account to be already initialized"
+        )
 
     code = 3012
     name = "AccountNotInitialized"
@@ -436,7 +444,9 @@ class AccountNotAssociatedTokenAccount(ProgramError):
 
 class AccountSysvarMismatch(ProgramError):
     def __init__(self):
-        super().__init__(3015, "The given public key does not match the required sysvar")
+        super().__init__(
+            3015, "The given public key does not match the required sysvar"
+        )
 
     code = 3015
     name = "AccountSysvarMismatch"
@@ -445,7 +455,9 @@ class AccountSysvarMismatch(ProgramError):
 
 class StateInvalidAddress(ProgramError):
     def __init__(self):
-        super().__init__(4000, "The given state account does not have the correct address")
+        super().__init__(
+            4000, "The given state account does not have the correct address"
+        )
 
     code = 4000
     name = "StateInvalidAddress"
@@ -454,7 +466,9 @@ class StateInvalidAddress(ProgramError):
 
 class Deprecated(ProgramError):
     def __init__(self):
-        super().__init__(5000, "The API being used is deprecated and should no longer be used")
+        super().__init__(
+            5000, "The API being used is deprecated and should no longer be used"
+        )
 
     code = 5000
     name = "Deprecated"

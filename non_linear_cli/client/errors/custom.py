@@ -106,7 +106,9 @@ class MintMismatch(ProgramError):
 
 class NotAssociated(ProgramError):
     def __init__(self) -> None:
-        super().__init__(6011, "Provided account(s) is/are not valid associated token accounts.")
+        super().__init__(
+            6011, "Provided account(s) is/are not valid associated token accounts."
+        )
 
     code = 6011
     name = "NotAssociated"
@@ -158,6 +160,18 @@ class AllFundsUnlocked(ProgramError):
     msg = "All funds are already unlocked"
 
 
+class PeriodTooShort(ProgramError):
+    def __init__(self) -> None:
+        super().__init__(
+            6017,
+            "Provided period is too short, should be equal or more than 30 seconds",
+        )
+
+    code = 6017
+    name = "PeriodTooShort"
+    msg = "Provided period is too short, should be equal or more than 30 seconds"
+
+
 CustomError = typing.Union[
     AccountAlreadyInitialized,
     AccountsNotWritable,
@@ -176,6 +190,7 @@ CustomError = typing.Union[
     Unauthorized,
     AmountAlreadyUpdated,
     AllFundsUnlocked,
+    PeriodTooShort,
 ]
 CUSTOM_ERROR_MAP: dict[int, CustomError] = {
     6000: AccountAlreadyInitialized(),
@@ -195,6 +210,7 @@ CUSTOM_ERROR_MAP: dict[int, CustomError] = {
     6014: Unauthorized(),
     6015: AmountAlreadyUpdated(),
     6016: AllFundsUnlocked(),
+    6017: PeriodTooShort(),
 }
 
 

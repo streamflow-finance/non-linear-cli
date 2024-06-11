@@ -30,23 +30,39 @@ def cancel(
 ) -> Instruction:
     keys: list[AccountMeta] = [
         AccountMeta(pubkey=accounts["sender"], is_signer=True, is_writable=True),
-        AccountMeta(pubkey=accounts["sender_tokens"], is_signer=False, is_writable=True),
+        AccountMeta(
+            pubkey=accounts["sender_tokens"], is_signer=False, is_writable=True
+        ),
         AccountMeta(pubkey=accounts["recipient"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["recipient_tokens"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["proxy_metadata"], is_signer=False, is_writable=True),
+        AccountMeta(
+            pubkey=accounts["recipient_tokens"], is_signer=False, is_writable=True
+        ),
+        AccountMeta(
+            pubkey=accounts["proxy_metadata"], is_signer=False, is_writable=True
+        ),
         AccountMeta(pubkey=accounts["proxy_tokens"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["stream_metadata"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["escrow_tokens"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["streamflow_treasury"], is_signer=False, is_writable=True),
+        AccountMeta(
+            pubkey=accounts["stream_metadata"], is_signer=False, is_writable=True
+        ),
+        AccountMeta(
+            pubkey=accounts["escrow_tokens"], is_signer=False, is_writable=True
+        ),
+        AccountMeta(
+            pubkey=accounts["streamflow_treasury"], is_signer=False, is_writable=True
+        ),
         AccountMeta(
             pubkey=accounts["streamflow_treasury_tokens"],
             is_signer=False,
             is_writable=True,
         ),
         AccountMeta(pubkey=accounts["partner"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["partner_tokens"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["mint"], is_signer=False, is_writable=False),
-        AccountMeta(pubkey=accounts["streamflow_program"], is_signer=False, is_writable=False),
+        AccountMeta(
+            pubkey=accounts["partner_tokens"], is_signer=False, is_writable=True
+        ),
+        AccountMeta(pubkey=accounts["mint"], is_signer=False, is_writable=True),
+        AccountMeta(
+            pubkey=accounts["streamflow_program"], is_signer=False, is_writable=False
+        ),
         AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
     ]
     if remaining_accounts is not None:

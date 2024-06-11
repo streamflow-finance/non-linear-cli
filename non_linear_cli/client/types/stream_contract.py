@@ -226,7 +226,9 @@ class StreamContract:
             mint=Pubkey.from_string(obj["mint"]),
             escrow_tokens=Pubkey.from_string(obj["escrow_tokens"]),
             streamflow_treasury=Pubkey.from_string(obj["streamflow_treasury"]),
-            streamflow_treasury_tokens=Pubkey.from_string(obj["streamflow_treasury_tokens"]),
+            streamflow_treasury_tokens=Pubkey.from_string(
+                obj["streamflow_treasury_tokens"]
+            ),
             streamflow_fee_total=obj["streamflow_fee_total"],
             streamflow_fee_withdrawn=obj["streamflow_fee_withdrawn"],
             streamflow_fee_percent=obj["streamflow_fee_percent"],
@@ -241,5 +243,7 @@ class StreamContract:
             current_pause_start=obj["current_pause_start"],
             pause_cumulative=obj["pause_cumulative"],
             last_rate_change_time=obj["last_rate_change_time"],
-            funds_unlocked_at_last_rate_change=obj["funds_unlocked_at_last_rate_change"],
+            funds_unlocked_at_last_rate_change=obj[
+                "funds_unlocked_at_last_rate_change"
+            ],
         )

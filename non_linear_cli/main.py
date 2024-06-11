@@ -1,8 +1,8 @@
 import hashlib
+import click
 import os
 from decimal import Decimal, InvalidOperation
 
-import click
 from borsh_construct import U64, CStruct
 from click import Context
 from solana.rpc.api import Client
@@ -14,18 +14,14 @@ from solders.pubkey import Pubkey
 from solders.rpc.responses import RpcConfirmedTransactionStatusWithSignature
 from solders.signature import Signature
 from spl.token.client import Token
-from spl.token.constants import ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID
+from spl.token.constants import TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID
 
 from .client.instructions import (
-    CancelAccounts,
+    create as create_instruction,
+    cancel as cancel_instruction,
     CreateAccounts,
     CreateArgs,
-)
-from .client.instructions import (
-    cancel as cancel_instruction,
-)
-from .client.instructions import (
-    create as create_instruction,
+    CancelAccounts,
 )
 from .client.types import CreateParams
 
@@ -78,15 +74,15 @@ def build_create_params(
 def validate_decimal(ctx, param, value: str) -> Decimal:
     try:
         return Decimal(value)
-    except InvalidOperation as e:
-        raise click.BadParameter("Not a decimal value") from e
+    except InvalidOperation:
+        raise click.BadParameter(f"Not a decimal value")
 
 
 def validate_pubkey(ctx, param, value: str | None) -> Pubkey:
     try:
         return Pubkey.from_string(value)
-    except Exception as e:
-        raise click.BadParameter("Invalid pubkey") from e
+    except:
+        raise click.BadParameter("Invalid pubkey")
 
 
 def validate_pubkey_optional(ctx, param, value: str | None) -> Pubkey | None:
@@ -99,13 +95,13 @@ def validate_private_keys_file(ctx, param, value: str) -> Keypair:
     if not os.path.exists(value):
         try:
             return Keypair.from_base58_string(value)
-        except Exception as e:
-            raise click.BadParameter("Invalid key or keys file does not exist") from e
+        except:
+            raise click.BadParameter(f"Invalid key or keys file does not exist")
     with open(value) as r:
         try:
             return Keypair.from_json(r.read().strip())
-        except Exception as e:
-            raise click.BadParameter("Invalid keys file") from e
+        except:
+            raise click.BadParameter(f"Invalid keys file")
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -325,7 +321,7 @@ def withdraw(
         [bytes(STREAMFLOW_TREASURY), bytes(TOKEN_PROGRAM_ID), bytes(mint)], ASSOCIATED_TOKEN_PROGRAM_ID
     )
     args = withdraw_stream_struct.build({"amount": amount})
-    ix_id = hashlib.sha256(b"global:withdraw").digest()[:8]
+    ix_id = hashlib.sha256("global:withdraw".encode()).digest()[:8]
     ix = Instruction(
         program_id=streamflow_program,
         data=bytes(ix_id) + bytes(args) + bytes(10),
@@ -427,6 +423,7 @@ def cancel(
         fee_payer=authority.pubkey(),
         instructions=[
             set_compute_unit_price(ctx.obj["compute_price"]),
+            set_compute_unit_limit(240_000),
             cancel_instruction(accounts, program),
         ],
     )

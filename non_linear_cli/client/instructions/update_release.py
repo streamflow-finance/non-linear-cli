@@ -21,10 +21,16 @@ def update_release(
 ) -> Instruction:
     keys: list[AccountMeta] = [
         AccountMeta(pubkey=accounts["sender"], is_signer=True, is_writable=True),
-        AccountMeta(pubkey=accounts["proxy_metadata"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["stream_metadata"], is_signer=False, is_writable=True),
+        AccountMeta(
+            pubkey=accounts["proxy_metadata"], is_signer=False, is_writable=True
+        ),
+        AccountMeta(
+            pubkey=accounts["stream_metadata"], is_signer=False, is_writable=True
+        ),
         AccountMeta(pubkey=accounts["withdrawor"], is_signer=False, is_writable=True),
-        AccountMeta(pubkey=accounts["streamflow_program"], is_signer=False, is_writable=False),
+        AccountMeta(
+            pubkey=accounts["streamflow_program"], is_signer=False, is_writable=False
+        ),
         AccountMeta(pubkey=SYS_PROGRAM_ID, is_signer=False, is_writable=False),
     ]
     if remaining_accounts is not None:
