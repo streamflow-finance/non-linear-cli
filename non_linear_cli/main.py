@@ -1,11 +1,15 @@
 import hashlib
 import os
+import time
 from decimal import Decimal, InvalidOperation
 
 import click
 from borsh_construct import U64, CStruct
 from click import Context
 from solana.rpc.api import Client
+from solana.rpc.commitment import Commitment, Finalized
+from solana.rpc.core import _COMMITMENT_TO_SOLDERS
+from solana.rpc.types import TxOpts
 from solana.transaction import Transaction
 from solders.compute_budget import set_compute_unit_limit, set_compute_unit_price
 from solders.instruction import AccountMeta, Instruction
@@ -107,6 +111,45 @@ def validate_private_keys_file(ctx, param, value: str) -> Keypair:
             return Keypair.from_json(r.read().strip())
         except:
             raise click.BadParameter("Invalid keys file")
+
+
+def send_and_confirm_transaction(
+    client: Client, tx: Transaction, *signers: Keypair, commitment: Commitment = Finalized
+) -> str:
+    blockhash_resp = client.get_latest_blockhash(commitment)
+    recent_blockhash = client.parse_recent_blockhash(blockhash_resp)
+    block_height = client.get_block_height(commitment).value
+
+    commitment_to_use = _COMMITMENT_TO_SOLDERS[commitment]
+    commitment_rank = int(commitment_to_use)
+
+    tx_sig: Signature | None = None
+    while block_height < blockhash_resp.value.last_valid_block_height:
+        if block_height < blockhash_resp.value.last_valid_block_height:
+            resp = client.send_transaction(
+                tx,
+                *signers,
+                recent_blockhash=recent_blockhash,
+                opts=TxOpts(
+                    skip_confirmation=True, preflight_commitment=commitment, max_retries=0, skip_preflight=bool(tx_sig)
+                ),
+            )
+            tx_sig = resp.value
+
+        resp = client.get_signature_statuses([tx_sig])
+        resp_value = resp.value[0]
+        if resp_value is not None:
+            confirmation_status = resp_value.confirmation_status
+            if confirmation_status is not None:
+                confirmation_rank = int(confirmation_status)
+                if confirmation_rank >= commitment_rank:
+                    break
+        time.sleep(1)
+        block_height = client.get_block_height(commitment).value
+    else:
+        click.echo(f"Unable to confirm the transaction: {tx_sig}")
+        raise click.Abort()
+    return str(tx_sig)
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -259,7 +302,7 @@ def create(
     tx = Transaction(
         fee_payer=sender.pubkey(),
         instructions=[
-            set_compute_unit_limit(240_000),
+            set_compute_unit_limit(300_000),
             set_compute_unit_price(ctx.obj["compute_price"]),
             create_instruction(args, accounts, program),
         ],
@@ -272,10 +315,11 @@ def create(
     if not token_client.get_accounts_by_owner(recipient).value:
         click.echo("Initializing Recipient token account")
         token_client.create_associated_token_account(recipient)
-    resp = client.send_transaction(tx, stream_signer, sender)
+    tx_sig = send_and_confirm_transaction(client, tx, stream_signer, sender)
+
     click.echo(f"Proxy Account id: {str(proxy_metadata)}")
     click.echo(f"Vesting Stream id: {str(stream_metadata)}")
-    click.echo(f"Tx: {resp.value}")
+    click.echo(f"Tx: {tx_sig}")
 
 
 def get_first_signature(client: Client, stream_id: Pubkey) -> Signature | None:
@@ -362,8 +406,8 @@ def withdraw(
             ix,
         ],
     )
-    resp = client.send_transaction(tx, authority)
-    click.echo(f"Tx: {resp.value}")
+    tx_sig = send_and_confirm_transaction(client, tx, authority)
+    click.echo(f"Tx: {tx_sig}")
 
 
 @cli.command()
@@ -438,13 +482,13 @@ def cancel(
     tx = Transaction(
         fee_payer=authority.pubkey(),
         instructions=[
-            set_compute_unit_price(ctx.obj["compute_price"]),
             set_compute_unit_limit(240_000),
+            set_compute_unit_price(ctx.obj["compute_price"]),
             cancel_instruction(accounts, program),
         ],
     )
-    resp = client.send_transaction(tx, authority)
-    click.echo(f"Tx: {resp.value}")
+    tx_sig = send_and_confirm_transaction(client, tx, authority)
+    click.echo(f"Tx: {tx_sig}")
 
 
 def main():
