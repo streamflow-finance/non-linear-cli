@@ -19,6 +19,7 @@ from solders.rpc.responses import RpcConfirmedTransactionStatusWithSignature
 from solders.signature import Signature
 from spl.token.client import Token
 from spl.token.constants import ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID
+from spl.token.instructions import create_associated_token_account
 
 from .client.instructions import (
     CancelAccounts,
@@ -311,10 +312,24 @@ def create(
     token_client = Token(client, mint, TOKEN_PROGRAM_ID, sender)
     if not token_client.get_accounts_by_owner(STREAMFLOW_TREASURY).value:
         click.echo("Initializing Treasury token account")
-        token_client.create_associated_token_account(STREAMFLOW_TREASURY)
+        txn = Transaction(
+            fee_payer=sender.pubkey(),
+            instructions=[
+                set_compute_unit_price(ctx.obj["compute_price"]),
+                create_associated_token_account(payer=sender.pubkey(), owner=STREAMFLOW_TREASURY, mint=mint),
+            ],
+        )
+        send_and_confirm_transaction(client, txn, sender)
     if not token_client.get_accounts_by_owner(recipient).value:
         click.echo("Initializing Recipient token account")
-        token_client.create_associated_token_account(recipient)
+        txn = Transaction(
+            fee_payer=sender.pubkey(),
+            instructions=[
+                set_compute_unit_price(ctx.obj["compute_price"]),
+                create_associated_token_account(payer=sender.pubkey(), owner=recipient, mint=mint),
+            ],
+        )
+        send_and_confirm_transaction(client, txn, sender)
     tx_sig = send_and_confirm_transaction(client, tx, stream_signer, sender)
 
     click.echo(f"Proxy Account id: {str(proxy_metadata)}")
